@@ -4493,7 +4493,7 @@ index facfdbb87e89f4db33ce13233c2ba4366d35c15b..807a6bb1026dac2c4cd0a50afe06fd62
      private final DebugBuffer<ChunkHolder.ChunkSaveDebug> chunkToSaveHistory;
      public int oldTicketLevel;
 diff --git a/src/main/java/net/minecraft/server/level/ChunkMap.java b/src/main/java/net/minecraft/server/level/ChunkMap.java
-index 17af50aa1ab310a5f0f221e2cd4e9e902c28a092..5ae30cd3af88c4f4179a4dc0c94906cfbfb7ff29 100644
+index 23e830d4cbe94a91c34ebb426311c8f861280b16..ed095afdf8be843b9a608130040739c0b21dbe0a 100644
 --- a/src/main/java/net/minecraft/server/level/ChunkMap.java
 +++ b/src/main/java/net/minecraft/server/level/ChunkMap.java
 @@ -125,7 +125,7 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
@@ -4883,14 +4883,14 @@ index d11741d2618976bdb51f75d823f260f32d5bafc9..23dfc741b31cdc25265fb5daffcae634
          return this.level.getChunkSource().chunkMap.isOldChunkAround(chunkPos, checkRadius);
      }
 diff --git a/src/main/java/net/minecraft/world/level/block/state/BlockBehaviour.java b/src/main/java/net/minecraft/world/level/block/state/BlockBehaviour.java
-index 07e41b936f5f229876cf9ff5cd8d6278088eee48..bf42cead5fa040d87da28d7be521b109724da19b 100644
+index b6d3f9f9520e410526cfeabcdeb9720dbe30e4bf..a009fca54665cbc3f11cad776256fbf1fbbb18c7 100644
 --- a/src/main/java/net/minecraft/world/level/block/state/BlockBehaviour.java
 +++ b/src/main/java/net/minecraft/world/level/block/state/BlockBehaviour.java
 @@ -874,6 +874,7 @@ public abstract class BlockBehaviour implements FeatureElement {
              this.spawnTerrainParticles = blockbase_info.spawnTerrainParticles;
              this.instrument = blockbase_info.instrument;
              this.replaceable = blockbase_info.replaceable;
-+            this.conditionallyFullOpaque = this.isOpaque() & this.isTransparentOnSomeFaces(); // Paper
++            this.conditionallyFullOpaque = this.canOcclude & this.useShapeForLightOcclusion; // Paper
          }
  
          private boolean calculateSolid() {
@@ -5037,7 +5037,7 @@ index d5b1fd0ff3f64675f90dd9f7f328a106e0992d51..846ae3fd184a1d63b743aa25e0456045
          return (ChunkStatus) BuiltInRegistries.CHUNK_STATUS.get(ResourceLocation.tryParse(id));
      }
 diff --git a/src/main/java/net/minecraft/world/level/chunk/EmptyLevelChunk.java b/src/main/java/net/minecraft/world/level/chunk/EmptyLevelChunk.java
-index ca0991b07def35b4697ba6d5569bf9a080e48a1c..f49cc61840c6588fca301b4c5c3aaeede03a323e 100644
+index 2ee1658532cb00d7bcd1d11e03f19d21ca7f2a9e..ac754827172a4de600d0a57a7d11853481a2dbf2 100644
 --- a/src/main/java/net/minecraft/world/level/chunk/EmptyLevelChunk.java
 +++ b/src/main/java/net/minecraft/world/level/chunk/EmptyLevelChunk.java
 @@ -21,6 +21,40 @@ public class EmptyLevelChunk extends LevelChunk {
@@ -5135,7 +5135,7 @@ index 6bb508105641b5729572736c5c3f9bd6711e309a..60e760b42dd6471a229dfd45490dcf8c
      @Override
      public BlockEntity getBlockEntity(BlockPos pos) {
 diff --git a/src/main/java/net/minecraft/world/level/chunk/LevelChunk.java b/src/main/java/net/minecraft/world/level/chunk/LevelChunk.java
-index 93348550f1632f7fc567eb5b42cd03d78532e383..42f29413d18b0df039736a87e4e5c1d15700f916 100644
+index c2179ea2a16ae0fac0b59d81a57abf13f563843f..3e51fb9fe05d5b974ae41ccc0acbb516a07c114b 100644
 --- a/src/main/java/net/minecraft/world/level/chunk/LevelChunk.java
 +++ b/src/main/java/net/minecraft/world/level/chunk/LevelChunk.java
 @@ -219,6 +219,12 @@ public class LevelChunk extends ChunkAccess {
@@ -5160,7 +5160,7 @@ index 93348550f1632f7fc567eb5b42cd03d78532e383..42f29413d18b0df039736a87e4e5c1d1
          this.setLightCorrect(protoChunk.isLightCorrect());
          this.unsaved = true;
          this.needsDecoration = true; // CraftBukkit
-@@ -409,7 +415,7 @@ public class LevelChunk extends ChunkAccess {
+@@ -426,7 +432,7 @@ public class LevelChunk extends ChunkAccess {
                      ProfilerFiller gameprofilerfiller = this.level.getProfiler();
  
                      gameprofilerfiller.push("updateSkyLightSources");
