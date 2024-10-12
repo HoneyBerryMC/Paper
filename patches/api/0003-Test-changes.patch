@@ -12,10 +12,10 @@ Co-authored-by: Riley Park <rileysebastianpark@gmail.com>
 Co-authored-by: Jake Potrebic <jake.m.potrebic@gmail.com>
 
 diff --git a/build.gradle.kts b/build.gradle.kts
-index cc586ca58c9ef852d7154f29c2dc187047f2c64a..948bd84db9923ef43cf753b7b72bf4d0081ab43a 100644
+index 78aadebda145fe83327ceb430c4b38f9a8e45a2b..8c7a5be5193ae397ec324d78566edce90608ed57 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
-@@ -105,6 +105,12 @@ tasks.test {
+@@ -107,6 +107,12 @@ tasks.test {
      useJUnitPlatform()
  }
  
@@ -66,7 +66,7 @@ index 0000000000000000000000000000000000000000..77154095cfb8b259bdb318e8ff40cb6f
 +    }
 +}
 diff --git a/src/test/java/org/bukkit/AnnotationTest.java b/src/test/java/org/bukkit/AnnotationTest.java
-index 64e7aef6220097edefdff3b98a771b988365930d..abadff47166722fdc756afdbc6ac7242b6bd4fb0 100644
+index 64e7aef6220097edefdff3b98a771b988365930d..7ff939ea41417bad3a436a87c89d5efa7ecefe86 100644
 --- a/src/test/java/org/bukkit/AnnotationTest.java
 +++ b/src/test/java/org/bukkit/AnnotationTest.java
 @@ -29,7 +29,13 @@ public class AnnotationTest {
@@ -103,7 +103,19 @@ index 64e7aef6220097edefdff3b98a771b988365930d..abadff47166722fdc756afdbc6ac7242
      };
  
      @Test
-@@ -67,14 +83,40 @@ public class AnnotationTest {
+@@ -61,20 +77,60 @@ public class AnnotationTest {
+                 continue;
+             }
+ 
++            // Paper start - skip class if it's @NullMarked
++            if (isClassNullMarked(clazz)) {
++                return;
++            }
++            // Paper end - skip class if it's @NullMarked
++
+             for (MethodNode method : clazz.methods) {
+                 if (!isMethodIncluded(clazz, method, foundClasses)) {
+                     continue;
                  }
  
                  if (mustBeAnnotated(Type.getReturnType(method.desc)) && !isWellAnnotated(method.invisibleAnnotations)) {
@@ -140,11 +152,19 @@ index 64e7aef6220097edefdff3b98a771b988365930d..abadff47166722fdc756afdbc6ac7242
 +                                }
 +                            }
 +                        }
++                        if (method.visibleTypeAnnotations != null) {
++                            for (final org.objectweb.asm.tree.TypeAnnotationNode invisibleTypeAnnotation : method.visibleTypeAnnotations) {
++                                final org.objectweb.asm.TypeReference ref = new org.objectweb.asm.TypeReference(invisibleTypeAnnotation.typeRef);
++                                if (ref.getSort() == org.objectweb.asm.TypeReference.METHOD_FORMAL_PARAMETER && ref.getTypeParameterIndex() == i && java.util.Arrays.asList(ACCEPTED_ANNOTATIONS).contains(invisibleTypeAnnotation.desc)) {
++                                    continue dancing;
++                                }
++                            }
++                        }
 +                        // Paper end - Allow use of TYPE_USE annotations
                          ParameterNode paramNode = parameters == null ? null : parameters.get(i);
                          String paramName = paramNode == null ? null : paramNode.name;
  
-@@ -91,13 +133,18 @@ public class AnnotationTest {
+@@ -91,13 +147,18 @@ public class AnnotationTest {
  
          Collections.sort(errors);
  
@@ -167,7 +187,20 @@ index 64e7aef6220097edefdff3b98a771b988365930d..abadff47166722fdc756afdbc6ac7242
      }
  
      private static void collectClasses(@NotNull File from, @NotNull Map<String, ClassNode> to) throws IOException {
-@@ -140,6 +187,11 @@ public class AnnotationTest {
+@@ -125,6 +186,12 @@ public class AnnotationTest {
+         }
+     }
+ 
++    // Paper start - skip class if it's @NullMarked
++    private static boolean isClassNullMarked(@NotNull ClassNode clazz) {
++        return clazz.visibleAnnotations != null && clazz.visibleAnnotations.stream().anyMatch(node -> "Lorg/jspecify/annotations/NullMarked;".equals(node.desc));
++    }
++    // Paper end - skip class if it's @NullMarked
++
+     private static boolean isClassIncluded(@NotNull ClassNode clazz, @NotNull Map<String, ClassNode> allClasses) {
+         // Exclude private, synthetic or deprecated classes and annotations, since their members can't be null
+         if ((clazz.access & (Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_DEPRECATED | Opcodes.ACC_ANNOTATION)) != 0) {
+@@ -140,6 +207,11 @@ public class AnnotationTest {
              // Exceptions are excluded
              return false;
          }
@@ -179,7 +212,7 @@ index 64e7aef6220097edefdff3b98a771b988365930d..abadff47166722fdc756afdbc6ac7242
  
          for (String excludedClass : EXCLUDED_CLASSES) {
              if (excludedClass.equals(clazz.name)) {
-@@ -152,7 +204,7 @@ public class AnnotationTest {
+@@ -152,7 +224,7 @@ public class AnnotationTest {
  
      private static boolean isMethodIncluded(@NotNull ClassNode clazz, @NotNull MethodNode method, @NotNull Map<String, ClassNode> allClasses) {
          // Exclude private, synthetic and deprecated methods
@@ -188,7 +221,7 @@ index 64e7aef6220097edefdff3b98a771b988365930d..abadff47166722fdc756afdbc6ac7242
              return false;
          }
  
-@@ -170,11 +222,30 @@ public class AnnotationTest {
+@@ -170,11 +242,30 @@ public class AnnotationTest {
          if ("<init>".equals(method.name) && isAnonymous(clazz)) {
              return false;
          }
@@ -233,10 +266,10 @@ index 89ca06ebecdaadd5dfc7bc74473ca15ad36f6eff..5974ceea58940e1799f3589eac0e39b9
  
      public static Stream<Arguments> data() {
 diff --git a/src/test/java/org/bukkit/support/TestServer.java b/src/test/java/org/bukkit/support/TestServer.java
-index 79173d6ed844f1e640e3aa745a9b560ec5e6a2bc..73ec679ac0d1f398b417bd174b47f9af93351e27 100644
+index 5709d52ed4ac4ce8dd8b0569281279f7305c5fb9..a47ee3ce660ec4467b5ed6a4b41fb2d19179a189 100644
 --- a/src/test/java/org/bukkit/support/TestServer.java
 +++ b/src/test/java/org/bukkit/support/TestServer.java
-@@ -61,6 +61,11 @@ public final class TestServer {
+@@ -72,6 +72,11 @@ public final class TestServer {
          UnsafeValues unsafeValues = mock(withSettings().stubOnly());
          when(instance.getUnsafe()).thenReturn(unsafeValues);
  

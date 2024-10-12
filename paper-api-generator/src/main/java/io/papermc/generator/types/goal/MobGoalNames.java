@@ -120,13 +120,14 @@ import org.bukkit.entity.ZombieVillager;
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 public class MobGoalNames {
 
     private static final Map<Class<? extends Goal>, Class<? extends Mob>> entityClassCache = new HashMap<>();
-    private static final Map<Class<? extends net.minecraft.world.entity.Mob>, Class<? extends Mob>> bukkitMap = new HashMap<>();
+    public static final Map<Class<? extends net.minecraft.world.entity.Mob>, Class<? extends Mob>> bukkitMap = new HashMap<>();
 
 
     static {
@@ -232,6 +233,9 @@ public class MobGoalNames {
         bukkitMap.put(net.minecraft.world.entity.monster.warden.Warden.class, org.bukkit.entity.Warden.class);
         bukkitMap.put(net.minecraft.world.entity.animal.allay.Allay.class, org.bukkit.entity.Allay.class);
         bukkitMap.put(net.minecraft.world.entity.animal.sniffer.Sniffer.class, org.bukkit.entity.Sniffer.class);
+        bukkitMap.put(net.minecraft.world.entity.monster.breeze.Breeze.class, org.bukkit.entity.Breeze.class);
+        bukkitMap.put(net.minecraft.world.entity.animal.armadillo.Armadillo.class, org.bukkit.entity.Armadillo.class);
+        bukkitMap.put(net.minecraft.world.entity.monster.Bogged.class, org.bukkit.entity.Bogged.class);
         //</editor-fold>
     }
 
@@ -279,8 +283,8 @@ public class MobGoalNames {
         name = sb.toString();
         name = name.replaceFirst("_", "");
 
-        if (flag && !deobfuscationMap.containsKey(name.toLowerCase()) && !ignored.contains(name)) {
-            System.out.println("need to map " + original + " (" + name.toLowerCase() + ")");
+        if (flag && !deobfuscationMap.containsKey(name.toLowerCase(Locale.ROOT)) && !ignored.contains(name)) {
+            System.out.println("need to map " + original + " (" + name.toLowerCase(Locale.ROOT) + ")");
         }
 
         // did we rename this key?

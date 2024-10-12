@@ -6,10 +6,9 @@ import io.papermc.paper.generated.GeneratedFrom;
 import io.papermc.paper.registry.RegistryKey;
 import io.papermc.paper.registry.TypedKey;
 import net.kyori.adventure.key.Key;
-import org.bukkit.MinecraftExperimental;
 import org.bukkit.generator.structure.Structure;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Vanilla keys for {@link RegistryKey#STRUCTURE}.
@@ -24,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
         "unused",
         "SpellCheckingInspection"
 })
-@GeneratedFrom("1.20.4")
+@GeneratedFrom("1.21.1")
 @ApiStatus.Experimental
 public final class StructureKeys {
     /**
@@ -228,8 +227,6 @@ public final class StructureKeys {
      *
      * @apiNote This field is version-dependant and may be removed in future Minecraft versions
      */
-    @ApiStatus.Experimental
-    @MinecraftExperimental("update 1.21")
     public static final TypedKey<Structure> TRIAL_CHAMBERS = create(key("trial_chambers"));
 
     /**
@@ -271,13 +268,13 @@ public final class StructureKeys {
     }
 
     /**
-     * Creates a key for {@link Structure} in a registry.
+     * Creates a key for {@link Structure} in the registry {@code minecraft:worldgen/structure}.
      *
      * @param key the value's key in the registry
      * @return a new typed key
      */
     @ApiStatus.Experimental
-    public static @NotNull TypedKey<Structure> create(final @NotNull Key key) {
+    public static @NonNull TypedKey<Structure> create(final @NonNull Key key) {
         return TypedKey.create(RegistryKey.STRUCTURE, key);
     }
 }
