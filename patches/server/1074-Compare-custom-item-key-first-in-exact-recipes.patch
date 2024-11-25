@@ -1,0 +1,43 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: partydev <admin@partyrealms.com>
+Date: Mon, 25 Nov 2024 14:18:16 -0800
+Subject: [PATCH] Compare custom item key first in exact recipes
+
+
+diff --git a/src/main/java/io/papermc/paper/inventory/recipe/ItemOrExact.java b/src/main/java/io/papermc/paper/inventory/recipe/ItemOrExact.java
+index caaad8f54fb892dfd6c7d4e02ab9c32997f89a6a..87cd48b32c390ba3958007836329c2b5076743e4 100644
+--- a/src/main/java/io/papermc/paper/inventory/recipe/ItemOrExact.java
++++ b/src/main/java/io/papermc/paper/inventory/recipe/ItemOrExact.java
+@@ -2,11 +2,16 @@ package io.papermc.paper.inventory.recipe;
+ 
+ import net.minecraft.core.Holder;
+ import net.minecraft.world.item.ItemStack;
++import org.bukkit.NamespacedKey;
++import org.bukkit.persistence.PersistentDataType;
++import java.util.Objects;
+ 
+ public sealed interface ItemOrExact permits ItemOrExact.Item, ItemOrExact.Exact {
+ 
+     int getMaxStackSize();
+ 
++    NamespacedKey key = NamespacedKey.fromString("core:item_key"); // PartyRealms - Compare custom item key first in exact recipes
++
+     boolean matches(ItemStack stack);
+ 
+     record Item(Holder<net.minecraft.world.item.Item> item) implements ItemOrExact {
+@@ -46,6 +51,15 @@ public sealed interface ItemOrExact permits ItemOrExact.Item, ItemOrExact.Exact
+ 
+         @Override
+         public boolean matches(final ItemStack stack) {
++            // PartyRealms start - Compare custom item key first in exact recipes
++            if (this.stack.getBukkitStack().hasItemMeta() && this.stack.getBukkitStack().getItemMeta().getPersistentDataContainer().has(Objects.requireNonNull(key))) {
++                if (!stack.getBukkitStack().hasItemMeta() || !stack.getBukkitStack().getItemMeta().getPersistentDataContainer().has(Objects.requireNonNull(key))) {
++                    return false;
++                }
++                return Objects.equals(this.stack.getBukkitStack().getItemMeta().getPersistentDataContainer().get(key,
++                    PersistentDataType.STRING), stack.getBukkitStack().getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.STRING));
++            }
++            // PartyRealms end - Compare custom item key first in exact recipes
+             return ItemStack.isSameItemSameComponents(this.stack, stack);
+         }
+ 
