@@ -1,0 +1,57 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: partydev <admin@partyrealms.com>
+Date: Mon, 25 Nov 2024 16:45:40 -0800
+Subject: [PATCH] Include custom item key in isSimilar
+
+
+diff --git a/src/main/java/org/bukkit/inventory/ItemStack.java b/src/main/java/org/bukkit/inventory/ItemStack.java
+index 6e4ca7d95953a25c0aaafd35e54ef9254a1b5f0b..dd89924e6a9e8a489209ae142fa9b3ae5177f20e 100644
+--- a/src/main/java/org/bukkit/inventory/ItemStack.java
++++ b/src/main/java/org/bukkit/inventory/ItemStack.java
+@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
+ import java.util.LinkedHashMap;
+ import java.util.Locale;
+ import java.util.Map;
++import java.util.Objects;
+ import org.bukkit.Bukkit;
+ import org.bukkit.Material;
+ import org.bukkit.NamespacedKey;
+@@ -17,6 +18,7 @@ import org.bukkit.enchantments.Enchantment;
+ import org.bukkit.inventory.meta.Damageable;
+ import org.bukkit.inventory.meta.ItemMeta;
+ import org.bukkit.material.MaterialData;
++import org.bukkit.persistence.PersistentDataType;
+ import org.jetbrains.annotations.NotNull;
+ import org.jetbrains.annotations.Nullable;
+ 
+@@ -30,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
+ public class ItemStack implements Cloneable, ConfigurationSerializable, Translatable, net.kyori.adventure.text.event.HoverEventSource<net.kyori.adventure.text.event.HoverEvent.ShowItem>, net.kyori.adventure.translation.Translatable, io.papermc.paper.persistence.PersistentDataViewHolder { // Paper
+     private ItemStack craftDelegate; // Paper - always delegate to server-backed stack
+     private MaterialData data = null;
++    NamespacedKey key = NamespacedKey.fromString("core:item_key"); // PartyRealms - Include custom item key in isSimilar
+ 
+     // Paper start - add static factory methods
+     /**
+@@ -333,10 +336,20 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
+      * @param stack the item stack to compare to
+      * @return true if the two stacks are equal, ignoring the amount
+      */
++    // PartyRealms start - Include custom item key in isSimilar
+     public boolean isSimilar(@Nullable ItemStack stack) {
+-        return this.craftDelegate.isSimilar(stack); // Paper - delegate
++        if (craftDelegate.hasItemMeta() && craftDelegate.getItemMeta().getPersistentDataContainer().has(key)) {
++            if (stack == null || !stack.hasItemMeta() || !stack.getItemMeta().getPersistentDataContainer().has(key)) {
++                return false;
++            }
++            return Objects.equals(
++                craftDelegate.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.STRING),
++                stack.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.STRING));
++        } else {
++            return this.craftDelegate.isSimilar(stack);
++        }
+     }
+-
++    // PartyRealms end - Include custom item key in isSimilar
+     @NotNull
+     @Override
+     public ItemStack clone() {
